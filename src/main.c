@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include<string.h>
 
 int main(int argc, char *argv[]) {
   // Flush after every printf
@@ -7,5 +8,10 @@ int main(int argc, char *argv[]) {
 
   printf("$ ");
 
+  char input[100];
+  fgets(input, sizeof(input), stdin);
+
+  input[strlen(input) - 1] = '\0';
+  printf("%s: Command not found\n",input);
   return 0;
 }
