@@ -25,6 +25,8 @@ int main(int argc, char *argv[]) {
       char* cmd = input + 5;
       if(strcmp(cmd, "echo") == 0 || strcmp(cmd, "type") == 0 || strcmp(cmd, "exit") == 0){
         printf("%s is a shell builtin\n", cmd);
+      }else{
+        printf("%s: not found\n", cmd);
       }
     }
     else{
