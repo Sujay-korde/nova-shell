@@ -26,7 +26,28 @@ int main(int argc, char *argv[]) {
       if(strcmp(cmd, "echo") == 0 || strcmp(cmd, "type") == 0 || strcmp(cmd, "exit") == 0){
         printf("%s is a shell builtin\n", cmd);
       }else{
-        printf("%s: not found\n", cmd);
+        char *path = getenv("PATH");
+        char *copy = strdup(path);
+        char *dir = strtok(copy, ":");
+
+        int found = 0;
+        while (dir) {
+            char fullpath[512];
+            snprintf(fullpath, sizeof(fullpath), "%s/%s", dir, cmd);
+
+            if (access(fullpath, X_OK) == 0) {
+                printf("%s is %s\n", cmd, fullpath);
+                found = 1;
+                break;
+            }
+            dir = strtok(NULL, ":");
+        }
+        free(copy);
+
+        if (!found) {
+            printf("%s: not found\n", cmd);
+        }
+        
       }
     }
     else{
