@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
 
   
   while(1){
-    printf("myshell> ");
+    printf("$ ");
 
     char input[100];
     fgets(input, 100, stdin);
