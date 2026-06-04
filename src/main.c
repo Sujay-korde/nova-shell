@@ -11,7 +11,9 @@ int main(int argc, char *argv[]) {
     printf("$ ");
 
     char input[100];
-    fgets(input, 100, stdin);
+    if(!fgets(input,sizeof(input), stdin)){
+      break;
+    }
   
     input[strlen(input) - 1] = '\0';
 
@@ -27,20 +29,38 @@ int main(int argc, char *argv[]) {
         printf("%s is a shell builtin\n", cmd);
       }else{
         char *path = getenv("PATH");
-        char *copy = strdup(path);
-        char *dir = strtok(copy, ":");
+        if(!path){
+          printf("%s: not found\n",cmd);
+          continue;
+        }
 
+        char *copy = strdup(path);
+        if(!copy){
+          perror("strdup");
+          continue;
+        }
+
+#ifdef _WIN32
+        char * delim = ";";
+#else
+        char * delim = ":";
+#endif
+        char *dir = strtok(copy,delim);
         int found = 0;
         while (dir) {
             char fullpath[512];
+#ifdef _WIN32
+            snprintf(fullpath, sizeof(fullpath), "%s\\%s.exe", dir, cmd);
+#else
             snprintf(fullpath, sizeof(fullpath), "%s/%s", dir, cmd);
+#endif
 
             if (access(fullpath, X_OK) == 0) {
                 printf("%s is %s\n", cmd, fullpath);
                 found = 1;
                 break;
             }
-            dir = strtok(NULL, ":");
+            dir = strtok(NULL, delim);
         }
         free(copy);
 
@@ -51,7 +71,10 @@ int main(int argc, char *argv[]) {
       }
     }
     else{
-      printf("%s: command not found\n",input);
+      char *first = strtok(input, " ");
+      if(first){
+        printf("%s: command not found\n",input);
+      }
     }
 
   }
