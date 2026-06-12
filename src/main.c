@@ -28,9 +28,17 @@ int main(int argc, char *argv[]) {
     else if(strncmp(input, "echo ", 5) == 0){
       printf("%s\n", input + 5);
     }
+    else if(strncmp(input, "pwd", 3) == 0){
+      char cwd[512];
+      if(getcwd(cwd, sizeof(cwd)) != NULL){
+        printf("%s\n",cwd);
+      }else{
+        perror("getcwd() error");
+      }
+    }
     else if(strncmp(input, "type ", 5) == 0){
       char* cmd = input + 5;
-      if(strcmp(cmd, "echo") == 0 || strcmp(cmd, "type") == 0 || strcmp(cmd, "exit") == 0){
+      if(strcmp(cmd, "echo") == 0 || strcmp(cmd, "type") == 0 || strcmp(cmd, "exit") == 0 || strcmp(cmd, "pwd") == 0){
         printf("%s is a shell builtin\n", cmd);
       }else{
         char *path = getenv("PATH");
