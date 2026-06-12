@@ -23,20 +23,57 @@ int main(int argc, char *argv[]) {
     input[strlen(input) - 1] = '\0';
 
     // 1. TOKENIZE FIRST: Parse the command and arguments into an array right away
-    char *args[20]; 
+// --- NEW CHARACTER PARSER WITH SINGLE QUOTE SUPPORT ---
+    char *args[20];
     int arg_count = 0;
-    
-    char *token = strtok(input, " ");
-    while (token != NULL && arg_count < 19) {
-      args[arg_count++] = token;
-      token = strtok(NULL, " ");
-    }
-    args[arg_count] = NULL; // The argument array must be NULL-terminated
 
-    // If the user just hits enter, skip processing and loop back
-    if (arg_count == 0) {
-      continue;
+    char current_arg[100];
+    int token_len = 0;
+    int in_single_quotes = 0; // 0 = false (unquoted), 1 = true (inside single quotes)
+
+    for (int i = 0; input[i] != '\0'; i++) {
+        char c = input[i];
+
+        if (in_single_quotes) {
+            if (c == '\'') {
+                // Found the closing single quote! Switch state, don't copy the quote itself
+                in_single_quotes = 0;
+            } else {
+                // Keep copying everything literally inside the quotes
+                if (token_len < 99) {
+                    current_arg[token_len++] = c;
+                }
+            }
+        } 
+        else {
+            // --- WE ARE IN UNQUOTED TERRITORY ---
+            if (c == '\'') {
+                // Found an opening single quote! Switch state
+                in_single_quotes = 1;
+            } 
+            else if (c == ' ') {
+                // A space in unquoted territory means a word boundary!
+                if (token_len > 0) {
+                    current_arg[token_len] = '\0';
+                    args[arg_count++] = strdup(current_arg); // Save a persistent copy of the word
+                    token_len = 0;                           // Reset buffer for the next word
+                }
+            } 
+            else {
+                // Normal unquoted character
+                if (token_len < 99) {
+                    current_arg[token_len++] = c;
+                }
+            }
+        }
     }
+
+// CRITICAL: Handle the very last argument if the string didn't end with a space
+if (token_len > 0) {
+    current_arg[token_len] = '\0';
+    args[arg_count++] = strdup(current_arg);
+}
+args[arg_count] = NULL; // NULL-terminate the array for execv
 
     // 2. PROCESS COMMANDS USING THE UNIFORM args ARRAY
     if(strcmp(args[0], "exit") == 0){
@@ -184,6 +221,9 @@ int main(int argc, char *argv[]) {
       else {
         printf("%s: command not found\n", cmd);
       }
+    }
+    for (int i = 0; i < arg_count; i++) {
+        free(args[i]);
     }
   }
   return 0;
