@@ -29,6 +29,16 @@ void set_shell_variable(const char *name, const char *value){
     }
 }
 
+
+const char* get_shell_variable(const char* name){
+    for(int i = 0; i < var_count; i++){
+        if(strcmp(variable_table[i].name, name) == 0){
+            return variable_table[i].value;
+        }
+    }
+    return NULL;
+}
+
 int is_builtin(const char *cmd) {
     if (strcmp(cmd, "exit") == 0 || strcmp(cmd, "echo") == 0 ||
         strcmp(cmd, "pwd") == 0  || strcmp(cmd, "cd") == 0   ||
@@ -138,6 +148,24 @@ int execute_builtin(char **args, int arg_count) {
         if(arg_count < 2){
             return 1; // No variable name provided, just return
         }
+
+        if(strcmp(args[1], "-p") == 0){
+            if(arg_count < 3){
+                printf("declare: missing operand\n");
+                return 1;
+            }
+
+            char *var_name = args[2];
+            const char *var_value = get_shell_variable(var_name);
+
+            if(var_value != NULL){
+                printf("declare -- %s=\"%s\"\n", var_name, var_value);
+            }else{
+                printf("declare: %s: not found\n", var_name);
+            }
+            return 1;
+        }
+
         char * assignment = args[1];
         char *equal_sign = strchr(assignment, '=');
         if(equal_sign !=NULL){
