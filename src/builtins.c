@@ -4,10 +4,35 @@
 #include <string.h>
 #include <unistd.h>
 
+#define MAX_VARIABLES 100
+
+typedef struct {
+    char name[50];
+    char value[256];
+} ShellVariable;
+
+static ShellVariable variable_table[MAX_VARIABLES];
+static int var_count = 0;
+
+void set_shell_variable(const char *name, const char *value){
+    for(int i = 0; i < var_count; i++){
+        if(strcmp(variable_table[i].name, name) == 0){
+            strncpy(variable_table[i].value,value, sizeof(variable_table[i].value) - 1);
+            return;
+        } 
+    }
+
+    if(var_count < MAX_VARIABLES){
+        strncpy(variable_table[var_count].name, name, sizeof(variable_table[var_count].name) - 1);
+        strncpy(variable_table[var_count].value, value, sizeof(variable_table[var_count].value) - 1);
+        var_count++;
+    }
+}
+
 int is_builtin(const char *cmd) {
     if (strcmp(cmd, "exit") == 0 || strcmp(cmd, "echo") == 0 ||
         strcmp(cmd, "pwd") == 0  || strcmp(cmd, "cd") == 0   ||
-        strcmp(cmd, "type") == 0) {
+        strcmp(cmd, "type") == 0 || strcmp(cmd, "declare") == 0) {
         return 1;
     }
     return 0;
@@ -106,6 +131,23 @@ int execute_builtin(char **args, int arg_count) {
     
     if (strcmp(args[0], "type") == 0) {
         handle_type(args, arg_count);
+        return 1;
+    }
+
+    if(strcmp(args[0], "declare") == 0){
+        if(arg_count < 2){
+            return 1; // No variable name provided, just return
+        }
+        char * assignment = args[1];
+        char *equal_sign = strchr(assignment, '=');
+        if(equal_sign !=NULL){
+            *equal_sign = '\0';
+            char *var_name = assignment;
+            char *var_value = equal_sign + 1;
+
+            set_shell_variable(var_name, var_value);
+            *equal_sign = '=';
+        }
         return 1;
     }
 
