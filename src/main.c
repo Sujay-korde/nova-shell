@@ -22,14 +22,14 @@ int main(int argc, char *argv[]) {
   
     input[strlen(input) - 1] = '\0';
 
-    // 1. TOKENIZE FIRST: Parse the command and arguments into an array right away
-// --- NEW CHARACTER PARSER WITH SINGLE QUOTE SUPPORT ---
+// ---CHARACTER PARSER WITH SINGLE QUOTE & DOUBLE QUOTE SUPPORT ---
     char *args[20];
     int arg_count = 0;
 
     char current_arg[100];
     int token_len = 0;
     int in_single_quotes = 0; // 0 = false (unquoted), 1 = true (inside single quotes)
+    int in_double_quotes = 0;
 
     for (int i = 0; input[i] != '\0'; i++) {
         char c = input[i];
@@ -44,36 +44,66 @@ int main(int argc, char *argv[]) {
                     current_arg[token_len++] = c;
                 }
             }
-        } 
+        }
+        else if(in_double_quotes) {
+          // WE ARE INSIDE DOUBLE QUOTES  
+          if(c == '"'){
+            in_double_quotes = 0; // Closing double quote 
+          }
+          else if(c == '\\'){
+            //check next character for escape sequences
+            char next = input[i + 1];
+            if(next == '"' || next == '\\' || next == '$' || next == '`'){
+              if (token_len < 99) {
+                current_arg[token_len++] = next;      
+                i++; // Skip the next character since it's part of the escape sequence
+              }
+            } else {
+              // Just a normal backslash, treat it as a literal character
+              if (token_len < 99) {
+                current_arg[token_len++] = c;
+              }
+            }
+          }
+          else { 
+            if (token_len < 99) current_arg[token_len++] = c;
+          }
+        }
         else {
-            // --- WE ARE IN UNQUOTED TERRITORY ---
+            // WE ARE IN UNQUOTED TERRITORY
             if (c == '\'') {
-                // Found an opening single quote! Switch state
-                in_single_quotes = 1;
+                in_single_quotes = 1; //open single quote
             } 
+            else if(c == '"'){
+                in_double_quotes = 1; //open double quote
+            }
             else if (c == ' ') {
-                // A space in unquoted territory means a word boundary!
                 if (token_len > 0) {
                     current_arg[token_len] = '\0';
                     args[arg_count++] = strdup(current_arg); // Save a persistent copy of the word
                     token_len = 0;                           // Reset buffer for the next word
                 }
+            }
+            else if(c == '\\'){
+              //outside of quotes, a backslash should escape the next character
+              char next = input[i + 1];
+              for(next != '\0'){
+                if(token_len < 99) current_arg[token_len++] = next;
+                i++; //skip escaped character
+              }
             } 
             else {
                 // Normal unquoted character
-                if (token_len < 99) {
-                    current_arg[token_len++] = c;
-                }
+                if (token_len < 99) current_arg[token_len++] = c;  
             }
         }
     }
 
-// CRITICAL: Handle the very last argument if the string didn't end with a space
-if (token_len > 0) {
-    current_arg[token_len] = '\0';
-    args[arg_count++] = strdup(current_arg);
-}
-args[arg_count] = NULL; // NULL-terminate the array for execv
+    if (token_len > 0) {
+        current_arg[token_len] = '\0';
+        args[arg_count++] = strdup(current_arg);
+    }
+    args[arg_count] = NULL; // NULL-terminate the array for execv
 
     // 2. PROCESS COMMANDS USING THE UNIFORM args ARRAY
     if(strcmp(args[0], "exit") == 0){
