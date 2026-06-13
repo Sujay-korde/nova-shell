@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
             else if(c == '\\'){
               //outside of quotes, a backslash should escape the next character
               char next = input[i + 1];
-              for(next != '\0'){
+              if(next != '\0'){
                 if(token_len < 99) current_arg[token_len++] = next;
                 i++; //skip escaped character
               }
