@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #define MAX_VARIABLES 100
 
@@ -13,6 +14,21 @@ typedef struct {
 
 static ShellVariable variable_table[MAX_VARIABLES];
 static int var_count = 0;
+
+int is_valid_identifier(const char *name){
+    if(name == NULL || *name == '\0'){
+        return 0;
+    }
+    if(!isalpha(name[0]) && name[0] != '_'){
+        return 0;
+    }
+    for(int i = 1; name[i] != '\0'; i++){
+        if(!isalnum(name[i]) && name[i] != '_'){
+            return 0;
+        }
+    }
+    return 1;
+}
 
 void set_shell_variable(const char *name, const char *value){
     for(int i = 0; i < var_count; i++){
@@ -173,7 +189,13 @@ int execute_builtin(char **args, int arg_count) {
             char *var_name = assignment;
             char *var_value = equal_sign + 1;
 
-            set_shell_variable(var_name, var_value);
+            if(is_valid_identifier(var_name)){
+                set_shell_variable(var_name, var_value);
+            }else{
+                *equal_sign = '=';
+                printf("declare: `%s': not a valid identifier\n", assignment);
+                return 1;
+            }
             *equal_sign = '=';
         }
         return 1;
