@@ -53,8 +53,5 @@ dkms.conf
 
 build
 vcpkg_installed
-.codecrafters/
-codecrafters.yml
-vcpkg-configuration.json
-vcpkg.json
-your_program.sh
+
+
